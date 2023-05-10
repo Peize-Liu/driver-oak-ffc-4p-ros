@@ -1,19 +1,44 @@
-#include "arducam_driver_v4l2.hpp"
-//main function for arducam_ros_node
-// int main(int argc, char **argv) {
-//   ros::init(argc, argv, "oakcam_ffc_4p_ros");
-//   ros::NodeHandle nh("oakcam_ffc_4p_ros");
-//   OAKFFC4PSDK::OAKFFC4PDriver driver;
+#pragma once
+#include <stdint.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/mman.h>
+#include <list>
+#include <vector>
+#include <linux/videodev2.h>
+#include <memory.h>
+#include <unistd.h>
+#include <time.h>
 
-//   int32_t ret = driver.Init(nh);
-//   if(ret < 0){
-//     printf("Init failed error:%d\n",ret);
-//     return -1;
-//   }
-//   ros::spin();
-//   return 0;
-// }
+#include "ffc_4p_driver.h"
 
+int main(){
+	OAKCAM::FFC4PDriver cam_driver;
+	int32_t ret = 0 ;
+	ret = cam_driver.InitPipeline();
+	if(ret != 0){
+		printf("init pipeline failed\n");
+		return -1 ;
+	}
+	ret = cam_driver.SetAllCameraSychron();
+	if(ret != 0){
+		printf("Set Cam sychron failed\n");
+		return -2 ;
+	}
+	ret = cam_driver.SetVedioOutputQueue();
+	if(ret !=0){
+		printf("Set video queue failed\n");
+		return -3;
+	}
+	while(true){
+		cam_driver.GrabImgThread();
+		usleep(40);
+	}
+	
+}
+
+#if 0 
 std::shared_ptr<dai::Pipeline> createPipeline() {
     // Start defining a pipeline
     auto pipeline = std::make_shared<dai::Pipeline>();
@@ -90,6 +115,7 @@ int main(int argc, char **argv) {
     }
 
 }
+#endif 
 // #include <iostream>
 
 // Includes common necessary includes for development using depthai library
@@ -159,10 +185,16 @@ int main() {
     while(true) {
         // Instead of get (blocking), we use tryGet (non-blocking) which will return the available data or None otherwise
     auto video_cam_a_frame = video_a->tryGet<dai::ImgFrame>();
+    auto video_cam_b_frame = video_b->tryGet<dai::ImgFrame>();
+    auto video_cam_c_frame = video_c->tryGet<dai::ImgFrame>();
+    auto video_cam_d_frame = video_d->tryGet<dai::ImgFrame>();
     if(video_cam_a_frame != nullptr){
         printf("show image\n");
         // std::vector<cv::Mat>images[4]={,video_cam_b_frame->getCvFrame(),video_cam_c_frame->getCvFrame(),video_cam_d_frame->getCvFrame()};
         cv::imshow("CAM_A",video_cam_a_frame->getCvFrame());
+        cv::imshow("CAM_B",video_cam_b_frame->getCvFrame());
+        cv::imshow("CAM_V",video_cam_c_frame->getCvFrame());
+        cv::imshow("CAM_D",video_cam_d_frame->getCvFrame());
         printf("xxxx\n");
     }
     cv::waitKey(1);    // auto video_cam_b_frame = video_b->get<dai::ImgFrame>();

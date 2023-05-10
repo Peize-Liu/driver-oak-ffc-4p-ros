@@ -15,7 +15,7 @@
     <arg name="camera_num" default="4"/>
 
     <param name="/arducam/image/compressed/jpeg_quality" value="$(arg jpeg_quality)" />
-    <node name="oakcam_ffc_4p_ros" pkg="oakcam_ffc_4p_ros" type="oakcam_ffc_4p_ros_node" output="screen" >
+    <node name="oakcam_ffc_4p_ros" pkg="oakcam_ffc_4p_ros" type="oakcam_ffc_4p_ros_node" output="screen" launch-prefix="gdb -ex run --args">
         <param name="cap_device" value="$(arg cap_device)" />
         <param name="width" value="$(arg width)" />
         <param name="height" value="$(arg height)" />
