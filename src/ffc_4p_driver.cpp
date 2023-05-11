@@ -55,7 +55,7 @@ FFC4PDriver::FFC4PDriver(){
 }
 
 FFC4PDriver::~FFC4PDriver(){
-
+	this->device_->close();
 }
 
 int32_t FFC4PDriver::InitPipeline(){
@@ -73,6 +73,7 @@ int32_t FFC4PDriver::InitPipeline(){
 		rgb_cam->setFps(30);
 		rgb_cam->initialControl.setManualExposure(1000,800);
 		if(CameraList[i].is_master){
+			printf("set %s as master camera\n",CameraList[i].stream_name.c_str());
 			rgb_cam->initialControl.setFrameSyncMode(dai::CameraControl::FrameSyncMode::OUTPUT);
 		} else {
 			rgb_cam->initialControl.setFrameSyncMode(dai::CameraControl::FrameSyncMode::INPUT);
@@ -89,6 +90,9 @@ int32_t FFC4PDriver::InitPipeline(){
 		// rgb_cam_list.push_back(rgb_cam);
 	}
 	this->pipeline_is_init_ = 1;
+	dai::Device::Config pipeline_config = this->pipeline_->getDeviceConfig();
+	pipeline_config.board.gpio[6] = dai::BoardConfig::GPIO(dai::BoardConfig::GPIO::Direction::OUTPUT, 
+	dai::BoardConfig::GPIO::Level::HIGH);
 	if(this->device_ != nullptr && this->device_is_detected_ ){
 		this->device_->startPipeline(*this->pipeline_);
 		return 0;
@@ -102,9 +106,9 @@ int32_t FFC4PDriver::SetAllCameraSychron(){
 		ROS_ERROR("Device is not detected or pipeline is not initiated\n");
 		return -1;
 	}
-	dai::Device::Config pipeline_config = this->pipeline_->getDeviceConfig();
-	pipeline_config.board.gpio[6] = dai::BoardConfig::GPIO(dai::BoardConfig::GPIO::Direction::OUTPUT, 
-		dai::BoardConfig::GPIO::Level::HIGH);
+	// dai::Device::Config pipeline_config = this->pipeline_->getDeviceConfig();
+	// pipeline_config.board.gpio[6] = dai::BoardConfig::GPIO(dai::BoardConfig::GPIO::Direction::OUTPUT, 
+	// 	dai::BoardConfig::GPIO::Level::HIGH);
 	return 0;
 }
 
