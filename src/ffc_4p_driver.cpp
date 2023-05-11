@@ -72,6 +72,12 @@ int32_t FFC4PDriver::InitPipeline(){
 		rgb_cam->setInterleaved(false);
 		rgb_cam->setFps(30);
 		rgb_cam->initialControl.setManualExposure(1000,800);
+		if(CameraList[i].is_master){
+			rgb_cam->initialControl.setFrameSyncMode(dai::CameraControl::FrameSyncMode::OUTPUT);
+		} else {
+			rgb_cam->initialControl.setFrameSyncMode(dai::CameraControl::FrameSyncMode::INPUT);
+		}
+
 		auto xout_rgb = this->pipeline_->create<dai::node::XLinkOut>();
 		if(xout_rgb ==nullptr){
 			ROS_ERROR("xout link falied\n");
@@ -97,7 +103,8 @@ int32_t FFC4PDriver::SetAllCameraSychron(){
 		return -1;
 	}
 	dai::Device::Config pipeline_config = this->pipeline_->getDeviceConfig();
-	pipeline_config.board.gpio[6] = dai::BoardConfig::GPIO(dai::BoardConfig::GPIO::Direction::OUTPUT, dai::BoardConfig::GPIO::Level::HIGH);
+	pipeline_config.board.gpio[6] = dai::BoardConfig::GPIO(dai::BoardConfig::GPIO::Direction::OUTPUT, 
+		dai::BoardConfig::GPIO::Level::HIGH);
 	return 0;
 }
 
