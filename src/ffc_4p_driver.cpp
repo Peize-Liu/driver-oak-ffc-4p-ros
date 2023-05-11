@@ -76,7 +76,7 @@ int32_t FFC4PDriver::InitPipeline(){
 			printf("set %s as master camera\n",CameraList[i].stream_name.c_str());
 			rgb_cam->initialControl.setFrameSyncMode(dai::CameraControl::FrameSyncMode::OUTPUT);
 		} else {
-			rgb_cam->initialControl.setFrameSyncMode(dai::CameraControl::FrameSyncMode::INPUT);
+			rgb_cam->initialControl.setFrameSyncMode(dai::CameraControl::FrameSyncMode::INPUT);	
 		}
 
 		auto xout_rgb = this->pipeline_->create<dai::node::XLinkOut>();
@@ -114,12 +114,15 @@ int32_t FFC4PDriver::SetAllCameraSychron(){
 
 int32_t FFC4PDriver::SetVedioOutputQueue(){
 	for(int i = 0; i < this->CameraList.size(); i++){
-		auto rgb_queue = this->device_->getOutputQueue(this->CameraList[i].stream_name, 1, false);
+		auto rgb_queue = this->device_->getOutputQueue(this->CameraList[i].stream_name, 2, false);
 		if(rgb_queue == nullptr){
 			ROS_ERROR("Get video queue failed\n");
 			return -1 ;
+		} else {
+			ROS_INFO("Get Out put queue %s success\n",this->CameraList[i].stream_name.c_str());
 		}
 		this->image_queue_.push_back(ImageNode(rgb_queue,this->CameraList[i].stream_name));
+		ROS_INFO("queue back push %s success\n",this->CameraList[i].stream_name.c_str());
 	}
 	return 0;
 }
@@ -130,7 +133,9 @@ void FFC4PDriver::GrabImgThread(){
 		auto video_frame = queue_node.data_output_q->tryGet<dai::ImgFrame>();
 		if(video_frame != nullptr){
 			cv::imshow(queue_node.topic,video_frame->getCvFrame());
-			cv::waitKey(1);
+			cv::waitKey(10);
+		} else {
+			printf("Get %s frame failed\n",queue_node.topic.c_str());
 		}
 	}
 }
