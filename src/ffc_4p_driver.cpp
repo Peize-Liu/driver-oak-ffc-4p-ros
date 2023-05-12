@@ -67,7 +67,7 @@ int32_t FFC4PDriver::InitPipeline(){
 	// std::list<std::shared_ptr<dai::node::ColorCamera>> rgb_cam_list;
 	for(int i = 0 ; i< this->CameraList.size(); i ++){
 		auto rgb_cam = this->pipeline_->create<dai::node::ColorCamera>();
-		rgb_cam->setBoardSocket(CameraList[i].socket);
+
 		rgb_cam->setResolution(CameraList[i].resolution);
 		rgb_cam->setInterleaved(false);
 		rgb_cam->setFps(30);
@@ -76,8 +76,10 @@ int32_t FFC4PDriver::InitPipeline(){
 			printf("set %s as master camera\n",CameraList[i].stream_name.c_str());
 			rgb_cam->initialControl.setFrameSyncMode(dai::CameraControl::FrameSyncMode::OUTPUT);
 		} else {
+			printf("set %s as slave camera\n",CameraList[i].stream_name.c_str());
 			rgb_cam->initialControl.setFrameSyncMode(dai::CameraControl::FrameSyncMode::INPUT);	
 		}
+		rgb_cam->setBoardSocket(CameraList[i].socket);
 
 		auto xout_rgb = this->pipeline_->create<dai::node::XLinkOut>();
 		if(xout_rgb ==nullptr){
@@ -135,7 +137,7 @@ void FFC4PDriver::GrabImgThread(){
 			cv::imshow(queue_node.topic,video_frame->getCvFrame());
 			cv::waitKey(10);
 		} else {
-			printf("Get %s frame failed\n",queue_node.topic.c_str());
+			// printf("Get %s frame failed\n",queue_node.topic.c_str());
 		}
 	}
 }

@@ -28,9 +28,9 @@ class FFC4PDriver
    };
    
    std::vector<FFCCameraConfig> CameraList = 
-      {{dai::CameraBoardSocket::CAM_A,dai::ColorCameraProperties::SensorResolution::THE_720_P, std::string("CAM_A"), false}, //
+      {{dai::CameraBoardSocket::CAM_A,dai::ColorCameraProperties::SensorResolution::THE_720_P, std::string("CAM_A"), true}, //
        {dai::CameraBoardSocket::CAM_B,dai::ColorCameraProperties::SensorResolution::THE_720_P, std::string("CAM_B"), false},
-       {dai::CameraBoardSocket::CAM_C,dai::ColorCameraProperties::SensorResolution::THE_720_P, std::string("CAM_C"), true},
+       {dai::CameraBoardSocket::CAM_C,dai::ColorCameraProperties::SensorResolution::THE_720_P, std::string("CAM_C"), false},
        {dai::CameraBoardSocket::CAM_D,dai::ColorCameraProperties::SensorResolution::THE_720_P, std::string("CAM_D"),false}};
    FFC4PDriver();
    ~FFC4PDriver();
