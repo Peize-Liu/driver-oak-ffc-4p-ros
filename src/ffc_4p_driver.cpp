@@ -74,6 +74,7 @@ void FFC4PDriver::GetParameters(ros::NodeHandle& nh){
 	nh.getParam("show_img",this->module_config_.show_img);
 	nh.getParam("fps",this->module_config_.fps);
 	nh.getParam("resolution",this->module_config_.resolution);
+	nh.getParam ("auto_expose",this->module_config_.auto_expose);
 	nh.getParam ("expose_time_us",this->module_config_.expose_time_us);
 	nh.getParam("iso",this->module_config_.iso);
 	nh.getParam("image_info",this->module_config_.show_img_info);
@@ -118,11 +119,16 @@ int32_t FFC4PDriver::InitPipeline(){
 		rgb_cam->setResolution(this->resolution_);
 		rgb_cam->setInterleaved(false);
 		rgb_cam->setFps(this->module_config_.fps);
-		rgb_cam->initialControl.setManualExposure(this->module_config_.expose_time_us,this->module_config_.iso);
+		if(this->module_config_.auto_expose){
+			rgb_cam->initialControl.setAutoExposureEnable();
+		} else {
+			rgb_cam->initialControl.setManualExposure(this->module_config_.expose_time_us,this->module_config_.iso);
+		}
 
 		if(!this->module_config_.auto_awb){
 			rgb_cam->initialControl.setManualWhiteBalance(this->module_config_.awb_value);
 		}
+
 
 		if(CameraList[i].is_master){
 			printf("set %s as master camera\n",CameraList[i].stream_name.c_str());
@@ -205,7 +211,7 @@ void FFC4PDriver::RosGrabImgThread(const ros::TimerEvent &event){
 void FFC4PDriver::StdGrabImgThread(){
 	while(this->is_run_){
 		GrabImg();
-		usleep(SECOND/this->module_config_.fps);
+		usleep(SECOND/(2*this->module_config_.fps));
 	}
 	ROS_INFO("Stop grab tread\n");
 }
@@ -249,9 +255,9 @@ void FFC4PDriver::ShowImg(ImageNode & image_node, std::chrono::_V2::steady_clock
 			} else {
 				// printf("Show info image\n");
 				double clearness = Clearness(image_node.image);
-				uint32_t latency_ms = std::chrono::duration_cast<std::chrono::microseconds>(time_now - image_node.cap_time_stamp).count();
+				uint32_t latency_us = std::chrono::duration_cast<std::chrono::microseconds>(time_now - image_node.cap_time_stamp).count();
 				std::stringstream info;
-				info << image_node.topic << "clearness: = " << clearness <<"    image_delay ms:=" <<latency_ms;
+				info << image_node.topic << "clearness: = " << clearness <<"    image_delay ms:=" << (latency_us/1000);
 				cv::putText(image_node.image, info.str(), cv::Point(10, 30), 
 					cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(255, 255, 0));
 				cv::imshow(image_node.topic,image_node.image);

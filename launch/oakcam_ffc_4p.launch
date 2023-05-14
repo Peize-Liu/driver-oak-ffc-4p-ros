@@ -1,18 +1,20 @@
 <launch>
-    <arg name="show_img" default="false" />
+    <arg name="show_img" default="true" />
     <arg name="fps" default = "30" />
     <arg name="resolution" default = "720"/>
+    <arg name="auto_expose" default = "true"/>
     <arg name="expose_time_us" default = "4000"/>
     <arg name="iso" default = "400"/>
-    <arg name="image_info" default= "true"/>
+    <arg name="image_info" default= "false"/>
     <arg name="auto_awb" default = "true"/>
     <arg name="awb_value" default = "4000"/>
-    <arg name="ros_defined_freq" default = "true"/>
+    <arg name="ros_defined_freq" default = "false"/>
 
     <node name="oakcam_ffc_4p_ros" pkg="oakcam_ffc_4p_ros" type="oakcam_ffc_4p_ros_node" output="screen">
         <param name="show_img" value="$(arg show_img)" />
         <param name="fps" value="$(arg fps)" />
         <param name="resolution" value = "$(arg resolution)"/>
+        <param name="auto_expose" value = "$(arg auto_expose)"/>
         <param name="expose_time_us" value = "$(arg expose_time_us)"/>
         <param name="iso" value = "$(arg iso)"/>
         <param name="image_info" value = "$(arg image_info)"/>
