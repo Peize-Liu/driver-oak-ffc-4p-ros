@@ -1,11 +1,11 @@
 <launch>
-    <arg name="show_img" default="true" />
-    <arg name="fps" default = "20" />
+    <arg name="show_img" default="false" />
+    <arg name="fps" default = "30" />
     <arg name="resolution" default = "720"/>
-    <arg name="expose_time_us" default = "10000"/>
+    <arg name="expose_time_us" default = "4000"/>
     <arg name="iso" default = "400"/>
-    <arg name="image_info" default= "false"/>
-    <arg name="auto_awb" default = "false"/>
+    <arg name="image_info" default= "true"/>
+    <arg name="auto_awb" default = "true"/>
     <arg name="awb_value" default = "4000"/>
     <arg name="ros_defined_freq" default = "true"/>
 

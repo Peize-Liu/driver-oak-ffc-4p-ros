@@ -18,6 +18,10 @@
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
 #include <depthai/utility/Clock.hpp>
+#include <chrono>
+#include <csignal>
+
+#define SECOND 1000000
 
 namespace OAKCAM{
 FFC4PDriver::FFC4PDriver(std::shared_ptr<ros::NodeHandle>& nh){
@@ -25,6 +29,7 @@ FFC4PDriver::FFC4PDriver(std::shared_ptr<ros::NodeHandle>& nh){
 		ROS_ERROR("Init with a invalid Nodehandler");
 		return;
 	}
+	cv::setNumThreads(1);
 	this->ros_node_ = nh;
   ROS_INFO("FFC 4P Device Detecting\n");
   auto deviceInfoVec = dai::Device::getAllAvailableDevices();
@@ -66,15 +71,15 @@ FFC4PDriver::~FFC4PDriver(){
 
 //TODO parameter did not get in
 void FFC4PDriver::GetParameters(ros::NodeHandle& nh){
-	nh.param<bool>("show_image",this->module_config_.show_img);
-	nh.param<int32_t>("fps",this->module_config_.fps);
-	nh.param<int32_t>("resolution",this->module_config_.resolution);
-	nh.param<int32_t>("expose_time_us",this->module_config_.expose_time_us);
-	nh.param<int32_t>("iso",this->module_config_.iso);
-	nh.param<int32_t>("image_info",this->module_config_.show_img_info);
-	nh.param<bool>("auto_awb", this->module_config_.auto_awb);
-	nh.param<int32_t>("awb_value", this->module_config_.awb_value);
-	nh.param<bool>("ros_defined_freq", this->module_config_.ros_defined_freq);
+	nh.getParam("show_img",this->module_config_.show_img);
+	nh.getParam("fps",this->module_config_.fps);
+	nh.getParam("resolution",this->module_config_.resolution);
+	nh.getParam ("expose_time_us",this->module_config_.expose_time_us);
+	nh.getParam("iso",this->module_config_.iso);
+	nh.getParam("image_info",this->module_config_.show_img_info);
+	nh.getParam("auto_awb", this->module_config_.auto_awb);
+	nh.getParam("awb_value", this->module_config_.awb_value);
+	nh.getParam("ros_defined_freq", this->module_config_.ros_defined_freq);
 	switch (this->module_config_.resolution){
 		case 720:{
 			this->resolution_ = dai::ColorCameraProperties::SensorResolution::THE_720_P;
@@ -186,48 +191,88 @@ void FFC4PDriver::StartVideoStream(){
 		printf("Use timer\n");
 		this->thread_timer_  = this->ros_node_->createTimer(ros::Duration(1/this->module_config_.fps),&FFC4PDriver::RosGrabImgThread, this);
 	} else{
-		printf("Use thread\n");
-		this->grab_thread_ = std::thread(&FFC4PDriver::GrabImgThread,this);
+		printf("Use std thread\n");
+		this->grab_thread_ = std::thread(&FFC4PDriver::StdGrabImgThread,this);
 	}
 	ROS_INFO("Start streaming\n");
 	return;
 }
 
 void FFC4PDriver::RosGrabImgThread(const ros::TimerEvent &event){
-	GrabImgThread();
+	GrabImg();
 }
 
+void FFC4PDriver::StdGrabImgThread(){
+	while(this->is_run_){
+		GrabImg();
+		usleep(SECOND/this->module_config_.fps);
+	}
+	ROS_INFO("Stop grab tread\n");
+}
 
-//TODO:: fps counter, image show 
-void FFC4PDriver::GrabImgThread(){
+void FFC4PDriver::GrabImg(){
 	cv_bridge::CvImage cv_img;
 	auto host_ros_now_time = ros::Time::now();
 	cv_img.header.stamp = host_ros_now_time;
 	cv_img.header.frame_id = "depth ai";
 	cv_img.encoding = "bgr8";
-	for(auto & queue_node : this->image_queue_){
+
+	auto host_time_now = dai::Clock::now();
+	for(auto && queue_node : this->image_queue_){
 		auto video_frame = queue_node.data_output_q->tryGet<dai::ImgFrame>();
 		if(video_frame != nullptr){
-			printf("%s Get image\n",queue_node.topic.c_str());
 			queue_node.image = video_frame->getCvFrame();
 			queue_node.cap_time_stamp =  video_frame->getTimestamp();
 			cv_img.image = queue_node.image;
 			queue_node.ros_publisher.publish(cv_img.toImageMsg());
 		} else {
-			ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
+			// ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
 		}
 	}
 	if(this->module_config_.show_img){
-		auto host_chrono_now_time = dai::Clock::now();
 		for(auto & image_node : image_queue_){
-			if(this->module_config_.show_img_info){
-			//TODO image show infomation
+			this->ShowImg(image_node,host_time_now);
+		}
+	}
+}
+
+//TODO fps counter
+void FFC4PDriver::ShowImg(ImageNode & image_node, std::chrono::_V2::steady_clock::time_point& time_now){
+	if(image_node.image.empty()){
+		// ROS_ERROR("Image empty\n");
+		return;
+	} else {
+		if(!this->module_config_.show_img_info){
+				// ROS_DEBUG("Show pure image\n");
+				cv::imshow(image_node.topic.c_str(),image_node.image);
+				cv::waitKey(1);
 			} else {
-				//TODO image show
+				// printf("Show info image\n");
+				double clearness = Clearness(image_node.image);
+				uint32_t latency_ms = std::chrono::duration_cast<std::chrono::microseconds>(time_now - image_node.cap_time_stamp).count();
+				std::stringstream info;
+				info << image_node.topic << "clearness: = " << clearness <<"    image_delay ms:=" <<latency_ms;
+				cv::putText(image_node.image, info.str(), cv::Point(10, 30), 
+					cv::FONT_HERSHEY_PLAIN, 1.5, cv::Scalar(255, 255, 0));
 				cv::imshow(image_node.topic,image_node.image);
 				cv::waitKey(1);
-			}	
-		}
+			}
+	}
+	return;
+}
+
+double Clearness(cv::Mat &img){
+  //Clearness for focus
+	if(img.empty()){
+		// printf("img is empty");
+		return 0.0f;
+	} else {
+		cv::Mat gray, imgSobel;
+		cv::Rect2d roi(img.cols/3, img.rows/3, img.cols/3, img.rows/3);
+		cv::rectangle(img, roi, cv::Scalar(255, 0, 0), 1);
+		cv::cvtColor(img(roi), gray, cv::COLOR_BGR2GRAY);
+		cv::Sobel(gray, imgSobel, CV_16U, 1, 1);
+		return cv::mean(imgSobel)[0];
 	}
 }
 

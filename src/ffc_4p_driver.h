@@ -6,7 +6,8 @@
 #include <ros/ros.h>
 
 #include "depthai/depthai.hpp"
-
+#include <depthai/utility/Clock.hpp>
+#include <chrono>
 
 namespace OAKCAM{
 
@@ -60,7 +61,11 @@ class FFC4PDriver
 
  private:
    void RosGrabImgThread(const ros::TimerEvent &event);
-   void GrabImgThread();
+   void StdGrabImgThread();
+   void GrabImg();
+
+   void ShowImg(ImageNode & image_node, std::chrono::_V2::steady_clock::time_point& time_now);
+
    std::shared_ptr<dai::Pipeline> pipeline_ = nullptr;
    std::shared_ptr<dai::Device> device_ = nullptr;
    std::list<ImageNode> image_queue_;
@@ -75,9 +80,13 @@ class FFC4PDriver
    std::shared_ptr<ros::NodeHandle> ros_node_ = nullptr;
    ros::Timer thread_timer_;
 
+
    //thread
    std::thread grab_thread_;
-
+   bool is_run_ = true;
    //image_tmp
 };
+
+double Clearness(cv::Mat &img); //calculate clearness to manuel focus
+
 }
