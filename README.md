@@ -9,6 +9,13 @@ This package is for oak_ffc_4P camera(OV9782) to publish ros topics with
 
 /oak_ffc_4p/image_CAM_D
 
+## how to install depthai-core-v2.21.2
+`mkdir build`
+`cd build`
+`cmake ../`
+`make install`
+
+then modify oak_ffc_4p's CMakeLists.txt to specify the local
 ## Usage
 
 launch file paramters:

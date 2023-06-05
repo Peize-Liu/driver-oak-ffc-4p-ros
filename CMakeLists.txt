@@ -3,7 +3,8 @@ project(oakcam_ffc_4p_ros)
 
 set(CMAKE_BUILD_TYPE "Release")
 add_compile_options(-std=c++14)
-set(CMAKE_CXX_FLAGS_RELEASE "-g -O3 -Wno-write-strings -Wno-format-overflow")
+set(CMAKE_CXX_FLAGS_RELEASE "-g -O3 -Wno-write-strings -Wno-format-overflow ")
+set(depthai_DIR "/home/dji/workspace/3rd_party/depthai-core-v2.21.2/build")
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
@@ -37,7 +38,7 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_library(oakcam_ffc_4p_ros
+add_library(oakcam_ffc_4p_ros STATIC
   src/ffc_4p_driver.cpp
 )
 
