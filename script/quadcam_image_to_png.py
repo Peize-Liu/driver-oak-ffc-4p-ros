@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 #To extract specific image from bag file and then store the image with png format
 
-#usage: python3 quadcam_image_extractor.py -i input.bag -o output_dir -n 1000 -s -d
+#usage: python3 ./quadcam_image_extractor.py --input_bag /media/khalil/ssd_data/data_set/omnicam/omni_calibration_CAMA.bag  --topic /oak_ffc_4p/image_CAM_A/compressed\
+                #--output_dir /home/khalil/workspace/tools/test \
+                #--step 4 --num 200 --start 20
 #only for oak_ffc_4p
 
 #!/usr/bin/env python3

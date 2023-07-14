@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-#to extract image with sepecific step from bag file
-#usage: python3 quadcam_extract.py -i input.bag -s 10 -t 0.5
+#to extract image with sepecific step from bag file. small the bag size
+#usage: python3 quadcam_image_extract.py -i input.bag -s 10 -t 0.5
 #only for oak_ffc_4p
 
 
