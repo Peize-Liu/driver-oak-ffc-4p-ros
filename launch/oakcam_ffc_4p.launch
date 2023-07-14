@@ -1,14 +1,15 @@
 <launch>
-    <arg name="show_img" default="true" />
+    <arg name="show_img" default="false" />
     <arg name="fps" default = "30" />
     <arg name="resolution" default = "720"/>
-    <arg name="auto_expose" default = "true"/>
-    <arg name="expose_time_us" default = "4000"/>
-    <arg name="iso" default = "400"/>
-    <arg name="image_info" default= "false"/>
+    <arg name="auto_expose" default = "false"/>
+    <arg name="expose_time_us" default = "15000"/>
+    <arg name="iso" default = "200"/>
+    <arg name="image_info" default= "true"/>
     <arg name="auto_awb" default = "true"/>
     <arg name="awb_value" default = "4000"/>
     <arg name="ros_defined_freq" default = "false"/>
+    <arg name="enable_compressed_image" default = "true"/>
 
     <node name="oakcam_ffc_4p_ros" pkg="oakcam_ffc_4p_ros" type="oakcam_ffc_4p_ros_node" output="screen">
         <param name="show_img" value="$(arg show_img)" />
@@ -21,6 +22,7 @@
         <param name="auto_awb" value = "$(arg auto_awb)"/>
         <param name="awb_value" value = "$(arg awb_value)"/>
         <param name="ros_defined_freq" value = "$(arg ros_defined_freq)"/>
+        <param name="enable_compressed_image" value = "$(arg enable_compressed_image)"/>
         <!-- <param name="cap_device" value="$(arg cap_device)" />
         <param name="width" value="$(arg width)" />
         <param name="height" value="$(arg height)" />

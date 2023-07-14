@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /ffc_4p_ws/src/oak-ffc-4p-ros/depthai-core-v2.21.2/devel/setup.sh

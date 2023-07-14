@@ -16,15 +16,16 @@ class FFC4PDriver
  public:
    struct CameraModuleConfig{
       bool show_img = false;
+      bool auto_expose = false;
+      bool ros_defined_freq = true;
+      bool enable_compressed_img = true;
+      bool show_img_info = false;
+      bool auto_awb = false;  
       int32_t fps = 20.0;
       int32_t resolution = 720;
-      bool auto_expose = false;
       int32_t expose_time_us = 10000;
       int32_t iso = 400;
-      bool show_img_info = false;
-      bool auto_awb = false;
       int32_t awb_value = 4000;
-      bool ros_defined_freq = true;
    };
    
    struct FFCCameraConfig{

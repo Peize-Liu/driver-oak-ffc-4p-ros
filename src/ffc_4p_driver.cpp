@@ -74,13 +74,14 @@ void FFC4PDriver::GetParameters(ros::NodeHandle& nh){
 	nh.getParam("show_img",this->module_config_.show_img);
 	nh.getParam("fps",this->module_config_.fps);
 	nh.getParam("resolution",this->module_config_.resolution);
-	nh.getParam ("auto_expose",this->module_config_.auto_expose);
-	nh.getParam ("expose_time_us",this->module_config_.expose_time_us);
+	nh.getParam("auto_expose",this->module_config_.auto_expose);
+	nh.getParam("expose_time_us",this->module_config_.expose_time_us);
 	nh.getParam("iso",this->module_config_.iso);
 	nh.getParam("image_info",this->module_config_.show_img_info);
 	nh.getParam("auto_awb", this->module_config_.auto_awb);
 	nh.getParam("awb_value", this->module_config_.awb_value);
 	nh.getParam("ros_defined_freq", this->module_config_.ros_defined_freq);
+	nh.getParam("enable_compressed_image", this->module_config_.enable_compressed_img);
 	switch (this->module_config_.resolution){
 		case 720:{
 			this->resolution_ = dai::ColorCameraProperties::SensorResolution::THE_720_P;
@@ -187,8 +188,17 @@ int32_t FFC4PDriver::SetVedioOutputQueue(){
 void FFC4PDriver::StartVideoStream(){
 	for(auto& i : this->image_queue_){
 		std::stringstream topic;
-		topic << "/oak_ffc_4p/image_" << i.topic;
-		i.ros_publisher = this->ros_node_->advertise<sensor_msgs::Image>(topic.str(),1);
+		if(this->module_config_.enable_compressed_img){
+			topic << "/oak_ffc_4p/image_" << i.topic <<"/compressed";
+		} else {
+			topic << "/oak_ffc_4p/image_" << i.topic;
+		}
+		if(this->module_config_.enable_compressed_img){
+			i.ros_publisher = this->ros_node_->advertise<sensor_msgs::CompressedImage>(topic.str(),1);
+		} else {
+			i.ros_publisher = this->ros_node_->advertise<sensor_msgs::Image>(topic.str(),1);
+		}
+		
 		ROS_INFO("Image topic %s publisher created",i.topic.c_str());
 	}
 	ROS_DEBUG("ros publisher established");
@@ -230,7 +240,12 @@ void FFC4PDriver::GrabImg(){
 			queue_node.image = video_frame->getCvFrame();
 			queue_node.cap_time_stamp =  video_frame->getTimestamp();
 			cv_img.image = queue_node.image;
-			queue_node.ros_publisher.publish(cv_img.toImageMsg());
+			if(this->module_config_.enable_compressed_img){
+				queue_node.ros_publisher.publish(cv_img.toCompressedImageMsg());
+			} else {
+				queue_node.ros_publisher.publish(cv_img.toImageMsg());
+			}
+			
 		} else {
 			// ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
 		}
