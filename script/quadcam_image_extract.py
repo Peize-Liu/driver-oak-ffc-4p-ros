@@ -53,8 +53,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Split quadcam images')
     parser.add_argument("-i","--input", type=str, help="input bag file")
     parser.add_argument('-v', '--show', action='store_true', help='compress the image topics')
-    parser.add_argument('-s', '--step', type=int, nargs="?", help="step for images, default 1", default=1)
-    parser.add_argument('-t', '--start', type=float, nargs="?", help="start time of the first image, default 0", default=0)
+    parser.add_argument('-s', '--step', type=int, help="step for images, default 1", default=1)
+    parser.add_argument('-t', '--start', type=float, help="start time of the first image, default 0", default=0)
     args = parser.parse_args()
     output_bag = generate_bagname(args.input)
     if not exists(args.input):
