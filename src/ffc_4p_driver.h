@@ -68,6 +68,8 @@ class FFC4PDriver
 
    void ShowImg(ImageNode & image_node, std::chrono::_V2::steady_clock::time_point& time_now);
 
+   ros::Publisher expose_time_publisher_;
+   
    std::shared_ptr<dai::Pipeline> pipeline_ = nullptr;
    std::shared_ptr<dai::Device> device_ = nullptr;
    std::list<ImageNode> image_queue_;

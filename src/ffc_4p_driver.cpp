@@ -203,6 +203,8 @@ void FFC4PDriver::StartVideoStream(){
 	}
 	ROS_DEBUG("ros publisher established");
 
+	this->expose_time_publisher_ = this->ros_node_->advertise<std_msgs::Uint32>("/oak_ffc_4p/expose_time_us",this->module_config_.expose_time_us);
+	
 	if(this->module_config_.ros_defined_freq){
 		printf("Use timer\n");
 		this->thread_timer_  = this->ros_node_->createTimer(ros::Duration(1/this->module_config_.fps),&FFC4PDriver::RosGrabImgThread, this);
@@ -245,7 +247,7 @@ void FFC4PDriver::GrabImg(){
 			} else {
 				queue_node.ros_publisher.publish(cv_img.toImageMsg());
 			}
-			
+			this->expose_time_publisher_.publish(this->module_config_.expose_time_us);
 		} else {
 			// ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
 		}
