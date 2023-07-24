@@ -203,7 +203,7 @@ void FFC4PDriver::StartVideoStream(){
 	}
 	ROS_DEBUG("ros publisher established");
 
-	this->expose_time_publisher_ = this->ros_node_->advertise<std_msgs::Uint32>("/oak_ffc_4p/expose_time_us",this->module_config_.expose_time_us);
+	this->expose_time_publisher_ = this->ros_node_->advertise<std_msgs::UInt32>("/oak_ffc_4p/expose_time_us",this->module_config_.expose_time_us);
 	
 	if(this->module_config_.ros_defined_freq){
 		printf("Use timer\n");
