@@ -14,6 +14,7 @@
 #include "ffc_4p_driver.h"
 
 #include <ros/ros.h>
+#include <std_msgs/Int32.h>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
 #include <image_transport/image_transport.h>
@@ -203,7 +204,7 @@ void FFC4PDriver::StartVideoStream(){
 	}
 	ROS_DEBUG("ros publisher established");
 
-	this->expose_time_publisher_ = this->ros_node_->advertise<std_msgs::UInt32>("/oak_ffc_4p/expose_time_us",this->module_config_.expose_time_us);
+	this->expose_time_publisher_ = this->ros_node_->advertise<std_msgs::Int32>("/oak_ffc_4p/expose_time_us",1);
 	
 	if(this->module_config_.ros_defined_freq){
 		printf("Use timer\n");
@@ -234,6 +235,8 @@ void FFC4PDriver::GrabImg(){
 	cv_img.header.stamp = host_ros_now_time;
 	cv_img.header.frame_id = "depth ai";
 	cv_img.encoding = "bgr8";
+	std_msgs::Int32 expose_time_msg;
+	expose_time_msg.data = this->module_config_.expose_time_us;
 
 	auto host_time_now = dai::Clock::now();
 	for(auto && queue_node : this->image_queue_){
@@ -247,7 +250,7 @@ void FFC4PDriver::GrabImg(){
 			} else {
 				queue_node.ros_publisher.publish(cv_img.toImageMsg());
 			}
-			this->expose_time_publisher_.publish(this->module_config_.expose_time_us);
+			this->expose_time_publisher_.publish(expose_time_msg);
 		} else {
 			// ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
 		}
