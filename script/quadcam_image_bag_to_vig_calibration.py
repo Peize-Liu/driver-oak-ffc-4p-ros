@@ -54,7 +54,8 @@ topic_list = [
     "/oak_ffc_4p/image_CAM_A/compressed",
     "/oak_ffc_4p/image_CAM_B/compressed",
     "/oak_ffc_4p/image_CAM_C/compressed",
-    "/oak_ffc_4p/image_CAM_D/compressed"]
+    "/oak_ffc_4p/image_CAM_D/compressed",
+    "/oak_ffc_4p/expose_time_us"]
 
 topic_conter = {"/oak_ffc_4p/image_CAM_A":0,
                 "/oak_ffc_4p/image_CAM_B":0,
@@ -75,6 +76,8 @@ if __name__ == '__main__':
     parser.add_argument("--start","--start", type=int, nargs="?", help="start time of the first image, default 0", default=0)
     parser.add_argument("--step", "--step", type=int, nargs="?", help="step for images, default 1", default=1)
     parser.add_argument("--expose_time_ms",type=float,help="expose time in ms",default=15)
+    parser.add_argument("--undistort","--undistort",type=bool,help="undistort image",default=False)
+
 
     args = parser.parse_args()
     # output_bag = generate_bagname(args.input_bag)
@@ -119,10 +122,12 @@ if __name__ == '__main__':
     t0 = None
     for topic, msg, t in bag.read_messages():
         if t0 is None:
-            t0 = t
+          t0 = t
         if (t - t0).to_sec() < args.start:
-            continue
-        
+          continue
+        if topic == "/oak_ffc_4p/expose_time_us":
+          if msg._type == "std_msgs/Int32":
+            expose_time_ms = msg.data
         if topic == extract_image_topic:
             if(extract_image_counter >= extract_image_num):
                break
@@ -136,6 +141,7 @@ if __name__ == '__main__':
                 img = bridge.imgmsg_to_cv2(msg, desired_encoding='passthrough')
               if msg._type == "sensor_msgs/CompressedImage":
                 img = bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='passthrough')
+
               cv.imwrite(genereate_imagename(extract_image_counter,args.output_dir),img)
               file.write("{:05d}".format(extract_image_counter) + " "+ str(t.to_sec()) + " "+str(expose_time_ms) + "\n")
               pbar.update(1)
