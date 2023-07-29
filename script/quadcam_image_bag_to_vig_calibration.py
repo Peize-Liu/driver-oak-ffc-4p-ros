@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 #To extract specific image from bag file and then store the image with png format
 
-#usage: python3 ./quadcam_image_extractor.py --input_bag /media/khalil/ssd_data/data_set/omnicam/omni_calibration_CAMA.bag  --topic /oak_ffc_4p/image_CAM_A/compressed\
-                #--output_dir /home/khalil/workspace/tools/test \
+#usage: python3 ./quadcam_image_extractor.py --input /media/khalil/ssd_data/data_set/omnicam/omni_calibration_CAMA.bag  --topic /oak_ffc_4p/image_CAM_A/compressed\
+                #--output /home/khalil/workspace/tools/test \
                 #--step 4 --num 200 --start 20
 #only for oak_ffc_4p
 
@@ -69,9 +69,9 @@ topic_conter = {"/oak_ffc_4p/image_CAM_A":0,
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Split quadcam images')
-    parser.add_argument("--input_bag","--input", type=str, help="input bag file")
+    parser.add_argument("--input","--input", type=str, help="input bag file")
     parser.add_argument("--topic","--topic", type=str, help="image topic to extract")
-    parser.add_argument("--output_dir","--output_dir",type=str,help="output dir path")
+    parser.add_argument("--output","--output",type=str,help="output dir path")
     parser.add_argument("--num","--num",type=int,help="number of images to extract",default=-1)
     parser.add_argument("--start","--start", type=int, nargs="?", help="start time of the first image, default 0", default=0)
     parser.add_argument("--step", "--step", type=int, nargs="?", help="step for images, default 1", default=1)
@@ -80,24 +80,24 @@ if __name__ == '__main__':
 
 
     args = parser.parse_args()
-    # output_bag = generate_bagname(args.input_bag)
-    if not exists(args.input_bag):
-      print(f"Input bag file {args.input_bag} does not exist")
+    # output_bag = generate_bagname(args.input)
+    if not exists(args.input):
+      print(f"Input bag file {args.input} does not exist")
       exit(1)
-    if not exists(args.output_dir):
-      print(f"Image save dir {args.output_dir} does not exist")
+    if not exists(args.output):
+      print(f"Image save dir {args.output} does not exist")
       exit(1)
     
     # open time-stamp file
-    file = open(args.output_dir + "/times.txt","w")
+    file = open(args.output + "/times.txt","w")
     if file == None:
       print("open time-stamp file failed")
       exit(1)
     #create images folder
-    if not exists(args.output_dir + "/images/"):
+    if not exists(args.output + "/images/"):
       print("create images folder")
-      os.makedirs(args.output_dir + "/images/")
-    bag = rosbag.Bag(args.input_bag)
+      os.makedirs(args.output + "/images/")
+    bag = rosbag.Bag(args.input)
     expose_time_ms = args.expose_time_ms
     extract_image_topic = args.topic
     total_num_imgs = bag.get_message_count(extract_image_topic)
@@ -142,13 +142,13 @@ if __name__ == '__main__':
               if msg._type == "sensor_msgs/CompressedImage":
                 img = bridge.compressed_imgmsg_to_cv2(msg, desired_encoding='passthrough')
 
-              cv.imwrite(genereate_imagename(extract_image_counter,args.output_dir),img)
+              cv.imwrite(genereate_imagename(extract_image_counter,args.output),img)
               file.write("{:05d}".format(extract_image_counter) + " "+ str(t.to_sec()) + " "+str(expose_time_ms) + "\n")
               pbar.update(1)
     pbar.close()
     file.close()
     print("zipping image folder please wait for exit\n")
-    zip_folder(args.output_dir + "/images/",args.output_dir + "/images.zip")
+    zip_folder(args.output + "/images/",args.output + "/images.zip")
     print("Finish extract images from bag file\n")
             # c += 1
             # if c % args.step != 0:

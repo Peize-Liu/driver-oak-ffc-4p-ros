@@ -19,6 +19,7 @@ class FFC4PDriver
       bool auto_expose = false;
       bool ros_defined_freq = true;
       bool enable_compressed_img = true;
+      bool enable_assemble_img = true;
       bool show_img_info = false;
       bool auto_awb = false;  
       int32_t fps = 20.0;
@@ -69,6 +70,7 @@ class FFC4PDriver
    void ShowImg(ImageNode & image_node, std::chrono::_V2::steady_clock::time_point& time_now);
 
    ros::Publisher expose_time_publisher_;
+   ros::Publisher assemble_image_publisher_; //to publish all camera images in
    
    std::shared_ptr<dai::Pipeline> pipeline_ = nullptr;
    std::shared_ptr<dai::Device> device_ = nullptr;

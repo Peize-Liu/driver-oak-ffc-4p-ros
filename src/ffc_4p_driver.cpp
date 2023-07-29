@@ -23,6 +23,7 @@
 #include <csignal>
 
 #define SECOND 1000000
+#define IMAGE_WIDTH 1280
 
 namespace OAKCAM{
 FFC4PDriver::FFC4PDriver(std::shared_ptr<ros::NodeHandle>& nh){
@@ -83,6 +84,7 @@ void FFC4PDriver::GetParameters(ros::NodeHandle& nh){
 	nh.getParam("awb_value", this->module_config_.awb_value);
 	nh.getParam("ros_defined_freq", this->module_config_.ros_defined_freq);
 	nh.getParam("enable_compressed_image", this->module_config_.enable_compressed_img);
+	nh.getParam("enable_assemble_image", this->module_config_.enable_assemble_img);
 	switch (this->module_config_.resolution){
 		case 720:{
 			this->resolution_ = dai::ColorCameraProperties::SensorResolution::THE_720_P;
@@ -206,6 +208,13 @@ void FFC4PDriver::StartVideoStream(){
 
 	this->expose_time_publisher_ = this->ros_node_->advertise<std_msgs::Int32>("/oak_ffc_4p/expose_time_us",1);
 	
+	if(this->module_config_.enable_compressed_img){
+		this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::CompressedImage>("/oak_ffc_4p/assemble_image/compressed",1);
+	} else {
+		this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::Image>("/oak_ffc_4p/assemble_image",1);
+	}
+
+
 	if(this->module_config_.ros_defined_freq){
 		printf("Use timer\n");
 		this->thread_timer_  = this->ros_node_->createTimer(ros::Duration(1/this->module_config_.fps),&FFC4PDriver::RosGrabImgThread, this);
@@ -230,8 +239,13 @@ void FFC4PDriver::StdGrabImgThread(){
 }
 
 void FFC4PDriver::GrabImg(){
-	cv_bridge::CvImage cv_img;
+	cv_bridge::CvImage cv_img, assemble_cv_img;
 	auto host_ros_now_time = ros::Time::now();
+	assemble_cv_img.header.stamp = host_ros_now_time;
+	assemble_cv_img.header.frame_id = "depth ai";
+	assemble_cv_img.encoding = "bgr8";
+	assemble_cv_img.image = cv::Mat::zeros(720,5120,CV_8UC3);
+
 	cv_img.header.stamp = host_ros_now_time;
 	cv_img.header.frame_id = "depth ai";
 	cv_img.encoding = "bgr8";
@@ -239,12 +253,17 @@ void FFC4PDriver::GrabImg(){
 	expose_time_msg.data = this->module_config_.expose_time_us;
 
 	auto host_time_now = dai::Clock::now();
+	int colow_position = 0;
 	for(auto && queue_node : this->image_queue_){
 		auto video_frame = queue_node.data_output_q->tryGet<dai::ImgFrame>();
 		if(video_frame != nullptr){
 			queue_node.image = video_frame->getCvFrame();
 			queue_node.cap_time_stamp =  video_frame->getTimestamp();
 			cv_img.image = queue_node.image;
+			if(this->module_config_.enable_assemble_img){
+				queue_node.image.copyTo(assemble_cv_img.image(cv::Rect(colow_position,0,1280,720)));
+				colow_position += IMAGE_WIDTH;
+			}
 			if(this->module_config_.enable_compressed_img){
 				queue_node.ros_publisher.publish(cv_img.toCompressedImageMsg());
 			} else {
@@ -253,6 +272,13 @@ void FFC4PDriver::GrabImg(){
 			this->expose_time_publisher_.publish(expose_time_msg);
 		} else {
 			// ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
+		}
+	}
+	if(this->module_config_.enable_assemble_img){
+		if(this->module_config_.enable_compressed_img){
+			assemble_image_publisher_.publish(assemble_cv_img.toCompressedImageMsg());
+		} else {
+			assemble_image_publisher_.publish(assemble_cv_img.toImageMsg());
 		}
 	}
 	if(this->module_config_.show_img){
