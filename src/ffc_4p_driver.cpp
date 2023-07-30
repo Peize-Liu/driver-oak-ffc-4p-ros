@@ -24,6 +24,7 @@
 
 #define SECOND 1000000
 #define IMAGE_WIDTH 1280
+#define FPS_BIAS 0
 
 namespace OAKCAM{
 FFC4PDriver::FFC4PDriver(std::shared_ptr<ros::NodeHandle>& nh){
@@ -83,8 +84,7 @@ void FFC4PDriver::GetParameters(ros::NodeHandle& nh){
 	nh.getParam("auto_awb", this->module_config_.auto_awb);
 	nh.getParam("awb_value", this->module_config_.awb_value);
 	nh.getParam("ros_defined_freq", this->module_config_.ros_defined_freq);
-	nh.getParam("enable_compressed_image", this->module_config_.enable_compressed_img);
-	nh.getParam("enable_assemble_image", this->module_config_.enable_assemble_img);
+	nh.getParam("calibration_mode", this->module_config_.calibration_mode);
 	switch (this->module_config_.resolution){
 		case 720:{
 			this->resolution_ = dai::ColorCameraProperties::SensorResolution::THE_720_P;
@@ -122,7 +122,7 @@ int32_t FFC4PDriver::InitPipeline(){
 
 		rgb_cam->setResolution(this->resolution_);
 		rgb_cam->setInterleaved(false);
-		rgb_cam->setFps(this->module_config_.fps);
+		rgb_cam->setFps(this->module_config_.fps+FPS_BIAS);
 		if(this->module_config_.auto_expose){
 			rgb_cam->initialControl.setAutoExposureEnable();
 		} else {
@@ -191,33 +191,35 @@ int32_t FFC4PDriver::SetVedioOutputQueue(){
 void FFC4PDriver::StartVideoStream(){
 	for(auto& i : this->image_queue_){
 		std::stringstream topic;
-		if(this->module_config_.enable_compressed_img){
+		if(this->module_config_.calibration_mode){
 			topic << "/oak_ffc_4p/image_" << i.topic <<"/compressed";
-		} else {
-			topic << "/oak_ffc_4p/image_" << i.topic;
-		}
-		if(this->module_config_.enable_compressed_img){
 			i.ros_publisher = this->ros_node_->advertise<sensor_msgs::CompressedImage>(topic.str(),1);
 		} else {
+			topic << "/oak_ffc_4p/image_" << i.topic;
 			i.ros_publisher = this->ros_node_->advertise<sensor_msgs::Image>(topic.str(),1);
 		}
+		// if(this->module_config_.calibration_mode){
+		// 	i.ros_publisher = this->ros_node_->advertise<sensor_msgs::CompressedImage>(topic.str(),1);
+		// } else {
+		// 	i.ros_publisher = this->ros_node_->advertise<sensor_msgs::Image>(topic.str(),1);
+		// }
 		
 		ROS_INFO("Image topic %s publisher created",i.topic.c_str());
 	}
 	ROS_DEBUG("ros publisher established");
 
 	this->expose_time_publisher_ = this->ros_node_->advertise<std_msgs::Int32>("/oak_ffc_4p/expose_time_us",1);
-	
-	if(this->module_config_.enable_compressed_img){
-		this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::CompressedImage>("/oak_ffc_4p/assemble_image/compressed",1);
-	} else {
-		this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::Image>("/oak_ffc_4p/assemble_image",1);
-	}
+	this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::Image>("/oak_ffc_4p/assemble_image",1);
+	// if(this->module_config_.calibration_mode){
+	// 	this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::CompressedImage>("/oak_ffc_4p/assemble_image/compressed",1);
+	// } else {
+		// this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::Image>("/oak_ffc_4p/assemble_image",1);
+	// }
 
 
 	if(this->module_config_.ros_defined_freq){
 		printf("Use timer\n");
-		this->thread_timer_  = this->ros_node_->createTimer(ros::Duration(1/this->module_config_.fps),&FFC4PDriver::RosGrabImgThread, this);
+		this->thread_timer_  = this->ros_node_->createTimer(ros::Duration(1/this->module_config_.fps*2),&FFC4PDriver::RosGrabImgThread, this);
 	} else{
 		printf("Use std thread\n");
 		this->grab_thread_ = std::thread(&FFC4PDriver::StdGrabImgThread,this);
@@ -231,56 +233,93 @@ void FFC4PDriver::RosGrabImgThread(const ros::TimerEvent &event){
 }
 
 void FFC4PDriver::StdGrabImgThread(){
+	
 	while(this->is_run_){
 		GrabImg();
-		usleep(SECOND/(2*this->module_config_.fps));
+		usleep(SECOND/(2.0f*this->module_config_.fps));
 	}
 	ROS_INFO("Stop grab tread\n");
 }
 
 void FFC4PDriver::GrabImg(){
-	cv_bridge::CvImage cv_img, assemble_cv_img;
+	static cv_bridge::CvImage cv_img, assemble_cv_img;
+	static std_msgs::Int32 expose_time_msg;
+	static cv::Mat assemble_cv_mat = cv::Mat::zeros(720,5120,CV_8UC3);
 	auto host_ros_now_time = ros::Time::now();
+	
 	assemble_cv_img.header.stamp = host_ros_now_time;
 	assemble_cv_img.header.frame_id = "depth ai";
 	assemble_cv_img.encoding = "bgr8";
-	assemble_cv_img.image = cv::Mat::zeros(720,5120,CV_8UC3);
+	assemble_cv_img.image = assemble_cv_mat;
 
 	cv_img.header.stamp = host_ros_now_time;
 	cv_img.header.frame_id = "depth ai";
 	cv_img.encoding = "bgr8";
-	std_msgs::Int32 expose_time_msg;
+
 	expose_time_msg.data = this->module_config_.expose_time_us;
 
 	auto host_time_now = dai::Clock::now();
 	int colow_position = 0;
+	int image_conter=0;
+
 	for(auto && queue_node : this->image_queue_){
 		auto video_frame = queue_node.data_output_q->tryGet<dai::ImgFrame>();
 		if(video_frame != nullptr){
 			queue_node.image = video_frame->getCvFrame();
 			queue_node.cap_time_stamp =  video_frame->getTimestamp();
-			cv_img.image = queue_node.image;
-			if(this->module_config_.enable_assemble_img){
-				queue_node.image.copyTo(assemble_cv_img.image(cv::Rect(colow_position,0,1280,720)));
-				colow_position += IMAGE_WIDTH;
-			}
-			if(this->module_config_.enable_compressed_img){
-				queue_node.ros_publisher.publish(cv_img.toCompressedImageMsg());
-			} else {
-				queue_node.ros_publisher.publish(cv_img.toImageMsg());
-			}
-			this->expose_time_publisher_.publish(expose_time_msg);
+			// cv_img.image = queue_node.image;
+			// if(this->module_config_.enable_compressed_img){
+			// 	queue_node.ros_publisher.publish(cv_img.toCompressedImageMsg());
+			// } else {
+			// 	queue_node.ros_publisher.publish(cv_img.toImageMsg());
+			// }
+			// this->expose_time_publisher_.publish(expose_time_msg);
+			image_conter++;
 		} else {
 			// ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
 		}
 	}
-	if(this->module_config_.enable_assemble_img){
-		if(this->module_config_.enable_compressed_img){
-			assemble_image_publisher_.publish(assemble_cv_img.toCompressedImageMsg());
+	//calibration mode publish four compressed image and raw assemble
+
+	if(image_conter == 4){//all cameras get images 
+		if(this->module_config_.calibration_mode){
+			for(auto && queue_node : this->image_queue_){
+				cv_img.image = queue_node.image;
+				queue_node.ros_publisher.publish(cv_img.toCompressedImageMsg());
+			}
 		} else {
+			for(auto && queue_node : this->image_queue_){
+				queue_node.image.copyTo(assemble_cv_img.image(cv::Rect(colow_position,0,1280,720)));
+				colow_position += IMAGE_WIDTH;
+			}
 			assemble_image_publisher_.publish(assemble_cv_img.toImageMsg());
 		}
 	}
+	this->expose_time_publisher_.publish(expose_time_msg);
+
+	// if(this->module_config_.enable_assemble_img){
+	// 	if(image_conter == 4){
+	// 		if(this->module_config_.enable_assemble_img){
+	// 			for(auto && queue_node : this->image_queue_){
+	// 				cv_img.image = queue_node.image;
+	// 				if(this->module_config_.enable_compressed_img){
+	// 					queue_node.ros_publisher.publish(cv_img.toCompressedImageMsg());
+	// 				} else {
+	// 					queue_node.ros_publisher.publish(cv_img.toImageMsg());
+	// 				}
+	// 				this->expose_time_publisher_.publish(expose_time_msg);
+	// 				queue_node.image.copyTo(assemble_cv_img.image(cv::Rect(colow_position,0,1280,720)));
+	// 				colow_position += IMAGE_WIDTH;
+	// 			}
+	// 		}
+	// 		if(this->module_config_.enable_compressed_img){
+	// 			// assemble_image_publisher_.publish(assemble_cv_img.toCompressedImageMsg());
+	// 		} else {
+	// 		assemble_image_publisher_.publish(assemble_cv_img.toImageMsg());
+	// 		}
+	// 	} else {
+	// 		printf("image_conter:%d \n",image_conter);
+	// 	}
 	if(this->module_config_.show_img){
 		for(auto & image_node : image_queue_){
 			this->ShowImg(image_node,host_time_now);

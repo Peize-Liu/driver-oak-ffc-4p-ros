@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   depthai_ros_msgs
   depthai_bridge
-  depthai
+  # depthai
 )
 
 #Find opencv

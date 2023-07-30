@@ -18,8 +18,7 @@ class FFC4PDriver
       bool show_img = false;
       bool auto_expose = false;
       bool ros_defined_freq = true;
-      bool enable_compressed_img = true;
-      bool enable_assemble_img = true;
+      bool calibration_mode = true;
       bool show_img_info = false;
       bool auto_awb = false;  
       int32_t fps = 20.0;
@@ -85,7 +84,6 @@ class FFC4PDriver
    //ros
    std::shared_ptr<ros::NodeHandle> ros_node_ = nullptr;
    ros::Timer thread_timer_;
-
 
    //thread
    std::thread grab_thread_;
