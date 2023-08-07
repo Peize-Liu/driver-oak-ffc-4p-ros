@@ -211,14 +211,6 @@ void FFC4PDriver::StartVideoStream(){
 	} else {
 		this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::Image>("/oak_ffc_4p/assemble_image",1);
 	}
-
-	// if(this->module_config_.calibration_mode){
-	// 	this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::CompressedImage>("/oak_ffc_4p/assemble_image/compressed",1);
-	// } else {
-		// this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::Image>("/oak_ffc_4p/assemble_image",1);
-	// }
-
-
 	if(this->module_config_.ros_defined_freq){
 		printf("Use timer\n");
 		this->thread_timer_  = this->ros_node_->createTimer(ros::Duration(1/this->module_config_.fps*2),&FFC4PDriver::RosGrabImgThread, this);
