@@ -86,7 +86,7 @@ void FFC4PDriver::GetParameters(ros::NodeHandle& nh){
 	nh.getParam("ros_defined_freq", this->module_config_.ros_defined_freq);
 	nh.getParam("calibration_mode", this->module_config_.calibration_mode);
 	nh.getParam("compresse_assemble_image", this->module_config_.compresse_assemble_image);
-	printf("Get calibration_mode:%d\n",this->module_config_.calibration_mode);
+	
 	switch (this->module_config_.resolution){
 		case 720:{
 			this->resolution_ = dai::ColorCameraProperties::SensorResolution::THE_720_P;

@@ -10,6 +10,7 @@
     <arg name="awb_value" default = "4000"/>
     <arg name="ros_defined_freq" default = "false"/>
     <arg name="calibration_mode" default = "false"/>
+    <arg name="compresse_assemble_image" default = "true"/>
 
     <node name="oakcam_ffc_4p_ros" pkg="oakcam_ffc_4p_ros" type="oakcam_ffc_4p_ros_node" output="screen">
         <param name="show_img" value="$(arg show_img)" />
@@ -23,6 +24,7 @@
         <param name="awb_value" value = "$(arg awb_value)"/>
         <param name="ros_defined_freq" value = "$(arg ros_defined_freq)"/>
         <param name="calibration_mode" value = "$(arg calibration_mode)"/>
+        <param name="compresse_assemble_image" value = "$(arg compresse_assemble_image)"/>
         <!-- <param name="cap_device" value="$(arg cap_device)" />
         <param name="width" value="$(arg width)" />
         <param name="height" value="$(arg height)" />
