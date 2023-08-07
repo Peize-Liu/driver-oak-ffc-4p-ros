@@ -85,6 +85,8 @@ void FFC4PDriver::GetParameters(ros::NodeHandle& nh){
 	nh.getParam("awb_value", this->module_config_.awb_value);
 	nh.getParam("ros_defined_freq", this->module_config_.ros_defined_freq);
 	nh.getParam("calibration_mode", this->module_config_.calibration_mode);
+	nh.getParam("compresse_assemble_image", this->module_config_.compresse_assemble_image);
+	printf("Get calibration_mode:%d\n",this->module_config_.calibration_mode);
 	switch (this->module_config_.resolution){
 		case 720:{
 			this->resolution_ = dai::ColorCameraProperties::SensorResolution::THE_720_P;
@@ -204,7 +206,18 @@ void FFC4PDriver::StartVideoStream(){
 	ROS_DEBUG("ros publisher established");
 
 	this->expose_time_publisher_ = this->ros_node_->advertise<std_msgs::Int32>("/oak_ffc_4p/expose_time_us",1);
-	this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::Image>("/oak_ffc_4p/assemble_image",1);
+	if(this->module_config_.compresse_assemble_image){
+		this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::CompressedImage>("/oak_ffc_4p/assemble_image/compressed",1);
+	} else {
+		this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::Image>("/oak_ffc_4p/assemble_image",1);
+	}
+
+	// if(this->module_config_.calibration_mode){
+	// 	this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::CompressedImage>("/oak_ffc_4p/assemble_image/compressed",1);
+	// } else {
+		// this->assemble_image_publisher_ = this->ros_node_->advertise<sensor_msgs::Image>("/oak_ffc_4p/assemble_image",1);
+	// }
+
 
 	if(this->module_config_.ros_defined_freq){
 		printf("Use timer\n");
@@ -274,7 +287,12 @@ void FFC4PDriver::GrabImg(){
 				queue_node.image.copyTo(assemble_cv_img.image(cv::Rect(colow_position,0,1280,720)));
 				colow_position += IMAGE_WIDTH;
 			}
-			assemble_image_publisher_.publish(assemble_cv_img.toImageMsg());
+			if(this->module_config_.compresse_assemble_image){
+				assemble_image_publisher_.publish(assemble_cv_img.toCompressedImageMsg());
+			} else {
+				assemble_image_publisher_.publish(assemble_cv_img.toImageMsg());
+			}
+
 		}
 	}
 	this->expose_time_publisher_.publish(expose_time_msg);
