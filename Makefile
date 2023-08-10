@@ -10,7 +10,7 @@ help:
 	@echo ""
 
 oak_ffc:
-	@docker build -t oak_ffc_img:latest -f ./oak_ffc_4p_ros.dockerfile ..
+	@docker build -t oak_ffc_img:latest -f ./oak_ffc_4p_ros.dockerfile .
 
 clean:
 	@docker rmi -f oak_ffc_img:latest
