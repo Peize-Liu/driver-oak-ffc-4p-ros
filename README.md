@@ -1,13 +1,19 @@
 # Introduction
-This package is for oak_ffc_4P camera(OV9782) to publish ros topics with  
+This package is for oak_ffc_4P camera(OV9782) to publish ros topics with 
 
-/oak_ffc_4p/image_CAM_A
+**calibration mode**:
 
-/oak_ffc_4p/image_CAM_B
+​	/oak_ffc_4p/image_CAM_A
 
-/oak_ffc_4p/image_CAM_C
+​	/oak_ffc_4p/image_CAM_B
 
-/oak_ffc_4p/image_CAM_D
+​	/oak_ffc_4p/image_CAM_C
+
+​	/oak_ffc_4p/image_CAM_D
+
+**fully synchronized mode**:
+
+​	/oak_ffc_4p/assemble_image
 
 ## how to install depthai-core-v2.21.2
 `mkdir build`
@@ -21,16 +27,18 @@ then modify oak_ffc_4p's CMakeLists.txt to specify the local
 launch file paramters:
 
 ```yaml
-<arg name="show_img" default="false" /> // show image with cv img shower
-<arg name="fps" default = "30" /> // camera fps, upto 30 fps
-<arg name="resolution" default = "720"/> //Camera resolution for OV9872 only 720 or 800
-<arg name="expose_time_us" default = "4000"/> //set expose time
-<arg name="auto_expose" default = "true"/> //set auto expose
-<arg name="iso" default = "400"/> // set iso
-<arg name="image_info" default= "true"/> //set whether show clearness info and latency info or not
-<arg name="auto_awb" default = "true"/> //set auto wight balence or not 
-<arg name="awb_value" default = "4000"/>//set wight balence value
-<arg name="ros_defined_freq" default = "false"/>// set use std::thread or ros timer to grab image(std::thread cpu loading is lower but fps will not be stable to setting one)
+    <arg name="show_img" default="false" /> # show image 
+    <arg name="fps" default = "25" />
+    <arg name="resolution" default = "720"/>
+    <arg name="auto_expose" default = "false"/>
+    <arg name="expose_time_us" default = "15000"/>
+    <arg name="iso" default = "200"/>
+    <arg name="image_info" default= "true"/>  #show image info like clearness and latency
+    <arg name="auto_awb" default = "true"/>
+    <arg name="awb_value" default = "4000"/>
+    <arg name="ros_defined_freq" default = "false"/>
+    <arg name="calibration_mode" default = "false"/> # false in fully synchronized mode / true for calibration mode
+    <arg name="compresse_assemble_image" default = "false"/> #compress assemble image or not
 ```
 
 
