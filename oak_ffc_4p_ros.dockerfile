@@ -12,7 +12,7 @@ COPY ./  ${OAK_WS}/src/oak-ffc-4p-ros/
 
 RUN cd /root/oak_ffc_ws/src/oak-ffc-4p-ros/depthai-core-v2.21.2 &&\
     cmake -S. -Bbuild &&\
-    cmake --build build &&\
+    cmake --build build --parallel $(nproc) &&\
     source "/opt/ros/noetic/setup.bash" &&\
     cd ${OAK_WS}/src &&\
     catkin_init_workspace &&\
