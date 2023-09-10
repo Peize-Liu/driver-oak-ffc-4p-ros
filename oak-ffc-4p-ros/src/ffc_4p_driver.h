@@ -61,12 +61,13 @@ class FFC4PDriver
    int32_t SetVedioOutputQueue();
    void GetParameters(ros::NodeHandle& nh);
    void StartVideoStream();
-
+   void GrapThreadJoin(){
+      grab_thread_.join();
+   };
  private:
    void RosGrabImgThread(const ros::TimerEvent &event);
    void StdGrabImgThread();
    void GrabImg();
-
    void ShowImg(ImageNode & image_node, std::chrono::_V2::steady_clock::time_point& time_now);
 
    ros::Publisher expose_time_publisher_;
