@@ -64,6 +64,10 @@ class FFC4PDriver
    void GrapThreadJoin(){
       grab_thread_.join();
    };
+   void StopVideoStream(){
+      is_run_ = false;
+      return;
+   };
  private:
    void RosGrabImgThread(const ros::TimerEvent &event);
    void StdGrabImgThread();

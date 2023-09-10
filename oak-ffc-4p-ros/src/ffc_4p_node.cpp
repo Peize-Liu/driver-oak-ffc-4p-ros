@@ -35,8 +35,10 @@ int main(int argc, char** argv){
 		return -3;
 	}
     cam_driver.StartVideoStream();
-	cam_driver.GrapThreadJoin();
-    // ros::spin();
+    ros::spin();
+    cam_driver.StopVideoStream();
+    usleep(500);
+    return 0 ;
 }
 
 #if 0 
