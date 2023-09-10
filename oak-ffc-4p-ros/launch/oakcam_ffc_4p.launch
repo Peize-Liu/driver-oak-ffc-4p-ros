@@ -3,12 +3,12 @@
     <arg name="fps" default = "25" />
     <arg name="resolution" default = "720"/>
     <arg name="auto_expose" default = "false"/>
-    <arg name="expose_time_us" default = "15000"/>
+    <arg name="expose_time_us" default = "40000"/>
     <arg name="iso" default = "200"/>
     <arg name="image_info" default= "true"/>
-    <arg name="auto_awb" default = "true"/>
-    <arg name="awb_value" default = "4000"/>
-    <arg name="ros_defined_freq" default = "false"/>
+    <arg name="auto_awb" default = "false"/>
+    <arg name="awb_value" default = "2500"/>
+    <arg name="ros_defined_freq" default = "true"/>
     <arg name="calibration_mode" default = "false"/>
     <arg name="compresse_assemble_image" default = "false"/>
 

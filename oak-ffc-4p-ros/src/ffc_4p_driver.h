@@ -4,6 +4,7 @@
 #include <vector>
 #include <thread>
 #include <ros/ros.h>
+#include <ros/rate.h>
 
 #include "depthai/depthai.hpp"
 #include <depthai/utility/Clock.hpp>
@@ -69,7 +70,7 @@ class FFC4PDriver
       return;
    };
  private:
-   void RosGrabImgThread(const ros::TimerEvent &event);
+   void RosGrabImgThread();
    void StdGrabImgThread();
    void GrabImg();
    void ShowImg(ImageNode & image_node, std::chrono::_V2::steady_clock::time_point& time_now);
@@ -90,6 +91,7 @@ class FFC4PDriver
    //ros
    std::shared_ptr<ros::NodeHandle> ros_node_ = nullptr;
    ros::Timer thread_timer_;
+   std::unique_ptr<ros::Rate> ros_rate_ptr_ = nullptr;
 
    //thread
    std::thread grab_thread_;

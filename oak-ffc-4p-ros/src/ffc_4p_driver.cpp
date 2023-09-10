@@ -213,7 +213,9 @@ void FFC4PDriver::StartVideoStream(){
 	}
 	if(this->module_config_.ros_defined_freq){
 		printf("Use timer\n");
-		this->thread_timer_  = this->ros_node_->createTimer(ros::Duration(1/this->module_config_.fps*2),&FFC4PDriver::RosGrabImgThread, this);
+		// this->thread_timer_  = this->ros_node_->createTimer(ros::Duration(1/this->module_config_.fps*2),&FFC4PDriver::RosGrabImgThread, this);
+		this->ros_rate_ptr_ = std::make_unique<ros::Rate>(this->module_config_.fps);
+		this->grab_thread_ = std::thread(&FFC4PDriver::RosGrabImgThread,this);
 	} else{
 		printf("Use std thread\n");
 		this->grab_thread_ = std::thread(&FFC4PDriver::StdGrabImgThread,this);
@@ -222,8 +224,12 @@ void FFC4PDriver::StartVideoStream(){
 	return;
 }
 
-void FFC4PDriver::RosGrabImgThread(const ros::TimerEvent &event){
-	GrabImg();
+void FFC4PDriver::RosGrabImgThread(){
+	while(this->ros_node_->ok() && this->is_run_){
+		GrabImg();
+		this->ros_rate_ptr_->sleep();
+	}
+	ROS_INFO("Stop grab tread\n");
 }
 
 void FFC4PDriver::StdGrabImgThread(){
