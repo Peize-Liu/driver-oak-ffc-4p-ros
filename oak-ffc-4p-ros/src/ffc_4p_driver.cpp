@@ -86,7 +86,7 @@ void FFC4PDriver::GetParameters(ros::NodeHandle& nh){
 	nh.getParam("ros_defined_freq", this->module_config_.ros_defined_freq);
 	nh.getParam("calibration_mode", this->module_config_.calibration_mode);
 	nh.getParam("compresse_assemble_image", this->module_config_.compresse_assemble_image);
-	
+	nh.getParam("enable_upside_down", this->module_config_.enable_upside_down);
 	switch (this->module_config_.resolution){
 		case 720:{
 			this->resolution_ = dai::ColorCameraProperties::SensorResolution::THE_720_P;
@@ -274,7 +274,12 @@ void FFC4PDriver::GrabImg(){
 	}
 	//calibration mode publish four compressed image and raw assemble
 
-	if(image_conter == 4){//all cameras get images 
+	if(image_conter == 4){//all cameras get images
+		if(this->module_config_.enable_upside_down){
+			for(auto && queue_node : this->image_queue_){
+				cv::flip(queue_node.image,queue_node.image,-1);
+			}
+		}
 		if(this->module_config_.calibration_mode){
 			for(auto && queue_node : this->image_queue_){
 				cv_img.image = queue_node.image;
@@ -292,6 +297,11 @@ void FFC4PDriver::GrabImg(){
 			}
 
 		}
+	} else {
+		for (auto && queue_node : this->image_queue_){
+			queue_node.image = cv::Mat::zeros(720,1280,CV_8UC3);
+		}
+		printf("[quadcam WARNING]Image not ready clear buffers\n");
 	}
 	this->expose_time_publisher_.publish(expose_time_msg);
 	if(this->module_config_.show_img){

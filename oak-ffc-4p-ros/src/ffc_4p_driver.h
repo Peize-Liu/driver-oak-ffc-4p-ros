@@ -23,6 +23,7 @@ class FFC4PDriver
       bool show_img_info = false;
       bool auto_awb = false;  
       bool compresse_assemble_image = false;
+      bool enable_upside_down = false;
       int32_t fps = 20.0;
       int32_t resolution = 720;
       int32_t expose_time_us = 10000;
