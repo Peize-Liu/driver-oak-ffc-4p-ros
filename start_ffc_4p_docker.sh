@@ -16,7 +16,7 @@ if [ ${START_OPTION} == 1 ]; then
   echo "[INFO] Start docker container with mapping current dir to docker container"
   CURRENT_DIR=$(pwd)
   echo "${CURRENT_DIR} will be mapped in to docker container with start option 1"
-  docker run -it --rm --net=host -v ${CURRENT_DIR}:/root/oak_ffc_ws/src/oak-ffc-4p-ros -v /dev/:/dev/  --privileged -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix  ${DOCKERIMAGE} /bin/bash 
+  docker run -it --rm --net=host -v ${CURRENT_DIR}:/root/oak_ffc_ws/src/oak_ffc_4p_ros -v /dev/:/dev/  --privileged -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix  ${DOCKERIMAGE} /bin/bash 
 else
   echo "Start docker container for image transportation only"
   docker run -it --rm --net=host -v /dev/:/dev/  --privileged -e DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix  ${DOCKERIMAGE} /bin/bash

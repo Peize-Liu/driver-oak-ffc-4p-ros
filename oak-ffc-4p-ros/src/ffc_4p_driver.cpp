@@ -269,7 +269,7 @@ void FFC4PDriver::GrabImg(){
 			queue_node.cap_time_stamp =  video_frame->getTimestamp();
 			image_conter++;
 		} else {
-			// ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
+			ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
 		}
 	}
 	//calibration mode publish four compressed image and raw assemble
