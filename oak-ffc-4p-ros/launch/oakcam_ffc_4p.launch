@@ -1,5 +1,5 @@
 <launch>
-    <arg name="show_img" default="true" />
+    <arg name="show_img" default="false" />
     <arg name="fps" default = "25" />
     <arg name="resolution" default = "720"/>
     <arg name="auto_expose" default = "false"/>
@@ -9,8 +9,8 @@
     <arg name="auto_awb" default = "false"/>
     <arg name="awb_value" default = "3200"/>
     <arg name="ros_defined_freq" default = "true"/>
-    <arg name="calibration_mode" default = "true"/>
-    <arg name="compresse_assemble_image" default = "true"/>
+    <arg name="calibration_mode" default = "false"/>
+    <arg name="compresse_assemble_image" default = "false"/>
     <arg name="enable_upside_down" default = "true"/>
 
     <node name="oakcam_ffc_4p_ros" pkg="oakcam_ffc_4p_ros" type="oakcam_ffc_4p_ros_node" output="screen">

@@ -9,9 +9,9 @@ RUN apt-get update &&\
     apt-get install -y \
     vim
 
-COPY ./  ${OAK_WS}/src
+COPY ./  ${OAK_WS}/src/oak_ffc_4p_ros
 
-RUN cd /root/oak_ffc_ws/src/depthai-core-v2.21.2 &&\
+RUN cd /root/oak_ffc_ws/src/oak_ffc_4p_ros/depthai-core-v2.21.2 &&\
     cmake -S. -Bbuild &&\
     cmake --build build --parallel $(nproc)
 
