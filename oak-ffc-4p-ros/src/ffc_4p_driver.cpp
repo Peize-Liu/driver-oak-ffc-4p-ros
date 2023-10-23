@@ -270,6 +270,7 @@ void FFC4PDriver::GrabImg(){
 			image_conter++;
 		} else {
 			ROS_WARN("Get %s frame failed\n",queue_node.topic.c_str());
+			return ;
 		}
 	}
 	//calibration mode publish four compressed image and raw assemble
@@ -298,9 +299,10 @@ void FFC4PDriver::GrabImg(){
 
 		}
 	} else {
-		for (auto && queue_node : this->image_queue_){
-			queue_node.image = cv::Mat::zeros(720,1280,CV_8UC3);
-		}
+		// for (auto && queue_node : this->image_queue_){
+		// 	//TODO: might be here
+		// 	queue_node.image = cv::Mat::zeros(720,1280,CV_8UC3);
+		// }
 		printf("[quadcam WARNING]Image not ready clear buffers\n");
 	}
 	this->expose_time_publisher_.publish(expose_time_msg);
